@@ -28,15 +28,6 @@ resource "azurerm_virtual_network" "vnet" {
     resource_group_name = azurerm_resource_group.spa-site.name
 }
 
-# General subnet for connecting private endpoints and services to
-resource "azurerm_subnet" "subnet" {
-  name = "subnet"
-  resource_group_name = azurerm_resource_group.spa-site.name
-  virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes = ["10.0.0.0/24"]
-  enforce_private_link_endpoint_network_policies = true
-}
-
 # Dedicated subnet for use with Azure Container Instances
 resource "azurerm_subnet" "container_subnet" {
   name = "container_subnet"
@@ -64,57 +55,6 @@ resource "azurerm_public_ip" "spa-public-ip" {
   sku = "Standard"
 }
 
-# Azure Postgres Server
-resource "azurerm_postgresql_server" "spa-db-server" {
-  name = "spa-db-server"
-  location = azurerm_resource_group.spa-site.location
-  resource_group_name = azurerm_resource_group.spa-site.name
-  
-  sku_name = "GP_Gen5_2"
-  storage_mb = 5120
-  auto_grow_enabled = false
-  
-  administrator_login = "pgadmin"
-  # Temp value, create Github Secret to host password
-  administrator_login_password = "$StoreSecurely!99"
-
-  version = "9.6"
-  ssl_enforcement_enabled = false
-}
-
-# Private endpoint for Postgres Service
-resource "azurerm_private_endpoint" "spa-db-server-endpoint" {
-  name = "spa-db-server-endpoint"
-  location = azurerm_resource_group.spa-site.location
-  resource_group_name = azurerm_resource_group.spa-site.name
-  subnet_id = azurerm_subnet.subnet.id
-
-  private_service_connection {
-    name = "spa-db-private-service-connection"
-    private_connection_resource_id = azurerm_postgresql_server.spa-db-server.id
-    subresource_names = ["postgresqlServer"]
-    is_manual_connection = false
-  }
-}
-
-# Firewall rule to allow access from VNET
-resource "azurerm_postgresql_firewall_rule" "spa-db-server-fw-rule" {
-  name = "vnet-rule"
-  resource_group_name = azurerm_resource_group.spa-site.name
-  server_name = azurerm_postgresql_server.spa-db-server.name
-  start_ip_address = "10.0.0.0"
-  end_ip_address = "10.0.1.255"
-}
-
-# Postgres Database
-resource "azurerm_postgresql_database" "spa-db" {
-  name = "testdb"
-  resource_group_name = azurerm_resource_group.spa-site.name
-  server_name = azurerm_postgresql_server.spa-db-server.name
-  charset = "UTF8"
-  collation = "English_United States.1252"
-}
-
 # Network Profile for Azure Container Instances
 resource "azurerm_network_profile" "spa-aci-profile" {
   name = "spa-aci-profile"
@@ -139,6 +79,24 @@ resource "azurerm_container_group" "spa-aci" {
   ip_address_type = "private"
   network_profile_id = azurerm_network_profile.spa-aci-profile.id
   os_type = "Linux"
+
+  container {
+    name = "postgres"
+    image = "postgres:9.6"
+    cpu = "0.5"
+    memory = "1.0"
+
+    ports {
+      port = 5432
+      protocol = "TCP"
+    }
+
+    environment_variables = {
+      "POSTGRES_PASSWORD" = "$StoreSecurely!99"
+      "POSTGRES_USER" = "pgadmin"
+      "POSTGRES_DB" = "testdb"
+    }
+  }
 
   container {
     name = "spa"
