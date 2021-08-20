@@ -92,3 +92,5 @@ jobs:
     # Generates an execution plan for Terraform
     - name: Terraform Plan
       run: terraform plan
+      with:
+        args: '-var="db_password = {{ secrets.DB_PASSWORD }}"'

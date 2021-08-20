@@ -14,6 +14,12 @@ provider "azurerm" {
 
 data "azurerm_client_config" "current" {}
 
+variable "db_password" { 
+  description = "Database User Password"
+  type = string
+}
+
+
 # Resource Group
 resource "azurerm_resource_group" "spa-site" {
     name = "spa-site"
@@ -92,7 +98,7 @@ resource "azurerm_container_group" "spa-aci" {
     }
 
     environment_variables = {
-      "POSTGRES_PASSWORD" = "$StoreSecurely!99"
+      "POSTGRES_PASSWORD" = var.db_password
       "POSTGRES_USER" = "pgadmin"
       "POSTGRES_DB" = "testdb"
     }
@@ -110,12 +116,12 @@ resource "azurerm_container_group" "spa-aci" {
     }
 
     environment_variables = {
-        "VTT_DBUSER" = "pgadmin@${ azurerm_postgresql_server.spa-db-server.fqdn }}"
+        "VTT_DBUSER" = "pgadmin"
         # Temp value, store securely in Github Secrets
-        "VTT_DBPASSWORD" = "$StoreSecurely!99"
+        "VTT_DBPASSWORD" = var.db_password
         "VTT_DBNAME" = "testdb"
         "VTT_DBPORT" = "5432"
-        "VTT_DBHOST" = azurerm_postgresql_server.spa-db-server.fqdn
+        "VTT_DBHOST" = "localhost"
         "VTT_LISTENHOST" = "0.0.0.0"
         "VTT_LISTENPORT" = "3000"
     }
