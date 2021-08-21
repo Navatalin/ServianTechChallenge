@@ -91,4 +91,4 @@ jobs:
 
     # Generates an execution plan for Terraform
     - name: Terraform Plan
-      run: terraform plan -out main.tfplan -var="db_password = {{ secrets.DB_PASSWORD }}"
+      run: terraform plan -out main.tfplan -var="db_password = ${{ secrets.DB_PASSWORD }}"
