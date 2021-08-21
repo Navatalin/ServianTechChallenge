@@ -59,7 +59,6 @@ jobs:
          TF_VAR_dbPassword: ${{ secrets.DB_PASSWORD }}
 
     - name: Terraform Apply
-      if: github.ref == 'refs/head/main'
       uses: hashicorp/terraform-github-actions@master
       with:
         tf_actions_version: 0.14.8
