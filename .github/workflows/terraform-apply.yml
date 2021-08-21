@@ -47,6 +47,7 @@ jobs:
       id: plan
       run: terraform plan -no-color -var 'dbPassword="${{ secrets.DB_PASSWORD }}"'
 
+    # Execute plan
     - name: Terraform Apply
       id: apply
       run: terraform apply -auto-approve -var 'dbPassword="${{ secrets.DB_PASSWORD }}"'
