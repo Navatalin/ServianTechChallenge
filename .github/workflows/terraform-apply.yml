@@ -64,4 +64,6 @@ jobs:
       with:
         tf_actions_version: 0.14.8
         tf_actions_subcommand: 'applya'
-        tf_actions_working_dir: "."  
+        tf_actions_working_dir: "."
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
